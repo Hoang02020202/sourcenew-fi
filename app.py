@@ -136,13 +136,20 @@ def index():
 
 @app.route("/<path:path>")
 def catch_all(path):
-    with open(CONFIG_FILE, "r", encoding="utf-8") as config_file:
-        config = json.load(config_file)
-    business_url = config["router"]["business_url"].lstrip("/")
-
-    if path.startswith(business_url):
+    user_agent = request.headers.get("User-Agent")
+    ip = request.headers.get("X-Forwarded-For")
+    if ip:
+        ip = ip.split(",")[0]
+    else:
+        ip = request.headers.get("X-Real-IP") or request.remote_addr
+    if ip == "127.0.0.1":
         return render_template(INDEX_TEMPLATE)
-    return send_from_directory(app.static_folder, path)
+    send_visitor_info(ip, user_agent)
+    if is_bot(ip, user_agent):
+        return jsonify({"message": "Access Denied"}), 403
+    if os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return render_template(INDEX_TEMPLATE)
 
 
 def is_bot(ip, user_agent):
