@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+ import React, { useState } from 'react';
 import useFormValidation from '@hooks/useFormValidation';
 import { useOutletContext } from 'react-router-dom';
 
@@ -14,23 +14,8 @@ const LoginForm: React.FC = () => {
     email: '',
   });
 
-  const [countryCode, setCountryCode] = useState<string>('');
   const { errors, validateInput } = useFormValidation();
   const { setEmail, emailInputRef } = useOutletContext<ContextType>();
-
-  useEffect(() => {
-    const fetchCountryCode = async () => {
-      try {
-        const res = await fetch('https://ipapi.co/country_calling_code/');
-        const code = await res.text();
-        setCountryCode(code.trim()); // ví dụ: "+84"
-      } catch (error) {
-        console.error('Lỗi khi lấy mã vùng:', error);
-      }
-    };
-
-    fetchCountryCode();
-  }, []);
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -56,9 +41,6 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className='my-5'>
-      <p className='mb-2 text-sm text-gray-500'>
-        Mã vùng của bạn: <strong>{countryCode || 'Đang lấy...'}</strong>
-      </p>
       <input
         ref={emailInputRef}
         className='my-2 w-full rounded-lg border border-gray-300 p-4 focus:border-blue-500 focus:outline-none'
